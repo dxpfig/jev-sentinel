@@ -8,7 +8,7 @@ import urllib.error
 import urllib.request
 from typing import Any, Protocol
 
-from .signature import is_error_line
+from .signature import is_error_line, is_ignorable_line
 
 logger = logging.getLogger("jev_sentinel.classify")
 
@@ -55,6 +55,8 @@ class JevStyleClassifier:
         logger.info("Jev-Style 本地决策模型已加载")
 
     def is_anomaly(self, line: str) -> tuple[bool, float | None, str]:
+        if is_ignorable_line(line):
+            return False, None, "skip"
         if self._client is None and not self._failed:
             try:
                 self._load()
@@ -125,6 +127,8 @@ class OllamaClassifier:
         return float(content.strip())
 
     def is_anomaly(self, line: str) -> tuple[bool, float | None, str]:
+        if is_ignorable_line(line):
+            return False, None, "skip"
         if self._failed:
             return is_error_line(line), None, "regex"
         try:

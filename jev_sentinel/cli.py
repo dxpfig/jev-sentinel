@@ -97,6 +97,13 @@ def main(argv: list[str] | None = None) -> int:
         logger.warning("未配置任何日志源（logs 为空），只做健康探测。")
 
     sentinel = build_sentinel(cfg)
+    logger.info(
+        "配置生效：notifier=%s webhook=%s classifier=%s llm=%s",
+        cfg.notifier.type,
+        bool(cfg.notifier.webhook),
+        cfg.classifier.type,
+        bool(cfg.llm.base_url and cfg.llm.model),
+    )
     if args.once:
         sentinel.scan_once()
     else:

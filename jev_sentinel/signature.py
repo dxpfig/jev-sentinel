@@ -12,14 +12,20 @@ _TIMESTAMP_RE = re.compile(r"\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}(?:[.,]\d+)?"
 _UUID_RE = re.compile(
     r"\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\b"
 )
+_IGNORABLE_PREFIXES = ("json:", "{", "}", '"')
+
+
+def is_ignorable_line(line: str) -> bool:
+    """把明显不是日志消息的行（行情 JSON 数据、空行等）排除在判断之外。"""
+    text = line.strip()
+    return not text or text.startswith(_IGNORABLE_PREFIXES)
 
 
 def is_error_line(line: str) -> bool:
     """正则兜底：判断一行日志是否疑似异常。"""
-    text = line.strip()
-    if not text or text.startswith(("json:", "{", "}", '"')):
+    if is_ignorable_line(line):
         return False
-    return bool(ERROR_RE.search(text))
+    return bool(ERROR_RE.search(line.strip()))
 
 
 def normalize_signature(
