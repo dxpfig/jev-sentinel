@@ -11,7 +11,7 @@ from typing import Any, Callable
 from .classify import AnomalyClassifier
 from .config import AgentConfig, HealthConfig, LogSourceConfig
 from .notifier import Notifier
-from .scanner import LogSource, process_running, tcp_alive
+from .scanner import LogSource, command_healthy, process_running, tcp_alive
 from .signature import normalize_signature
 
 logger = logging.getLogger("jev_sentinel.agent")
@@ -144,6 +144,10 @@ class Sentinel:
             self._observe(
                 f"健康检查：端口不可达（{endpoint}）", not tcp_alive(endpoint), notify_first=True
             )
+        for probe in self.health.commands:
+            healthy = command_healthy(probe)
+            if healthy is not None:
+                self._observe(f"健康检查：{probe.name}", not healthy, notify_first=True)
         self._prune()
 
     def run_forever(self) -> None:

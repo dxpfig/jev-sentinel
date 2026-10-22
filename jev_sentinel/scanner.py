@@ -9,6 +9,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from .config import CommandProbe
+
 logger = logging.getLogger("jev_sentinel.scanner")
 
 
@@ -105,4 +107,34 @@ def tcp_alive(endpoint: str, timeout: float = 3.0) -> bool:
             return True
     except (OSError, ValueError):
         return False
+
+
+def command_healthy(probe: CommandProbe, timeout: float = 15.0) -> bool | None:
+    """运行自定义探测命令，退出码 0 视为健康；无法执行时返回 None。"""
+    try:
+        if probe.shell:
+            result = subprocess.run(
+                probe.shell,
+                shell=True,
+                capture_output=True,
+                text=True,
+                timeout=timeout,
+                check=False,
+                cwd=probe.cwd or None,
+            )
+        elif probe.argv:
+            result = subprocess.run(
+                probe.argv,
+                capture_output=True,
+                text=True,
+                timeout=timeout,
+                check=False,
+                cwd=probe.cwd or None,
+            )
+        else:
+            return None
+        return result.returncode == 0
+    except Exception:
+        logger.exception("自定义探测执行失败：%s", probe.name)
+        return None
 

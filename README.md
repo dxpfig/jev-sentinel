@@ -89,7 +89,7 @@ python -m jev_sentinel --config config.toml --once
 | `notifier.secret` | `JEV_SENTINEL_FEISHU_SECRET` / `JEV_SENTINEL_NOTIFIER_SECRET` | 空 | 飞书签名校验密钥 |
 | `notifier.timeout` | `JEV_SENTINEL_NOTIFIER_TIMEOUT` | `5` | 通知请求超时（秒） |
 
-`[[logs]]` 支持多条，每条含 `path`（必填，支持 glob）、`tail_bytes`、`max_lines`。`[health]` 含 `processes` 与 `tcp` 两个列表。
+`[[logs]]` 支持多条，每条含 `path`（必填，支持 glob）、`tail_bytes`、`max_lines`。`[health]` 含 `processes`、`tcp` 与 `commands` 三个列表；`commands` 是自定义探测命令（退出码 0 视为健康，`argv` 与 `shell` 二选一，`cwd` 可选）。
 
 ## 告警卡片示例
 

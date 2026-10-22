@@ -26,11 +26,22 @@ class LogSourceConfig:
 
 
 @dataclass
+class CommandProbe:
+    """一个自定义健康探测命令：退出码 0 视为健康。"""
+
+    name: str
+    argv: list[str] = field(default_factory=list)
+    shell: str = ""
+    cwd: str = ""
+
+
+@dataclass
 class HealthConfig:
-    """进程与 TCP 端口健康探测。"""
+    """进程、TCP 端口与自定义命令健康探测。"""
 
     processes: list[str] = field(default_factory=list)
     tcp: list[str] = field(default_factory=list)
+    commands: list[CommandProbe] = field(default_factory=list)
 
 
 @dataclass
@@ -184,6 +195,22 @@ def load_config(path: str | Path | None = None) -> Config:
         health_processes = []
     if not isinstance(health_tcp, list):
         health_tcp = []
+    health_commands: list[CommandProbe] = []
+    commands_data = health.get("commands", [])
+    if isinstance(commands_data, list):
+        for item in commands_data:
+            if isinstance(item, dict) and item.get("name"):
+                argv = item.get("argv") or item.get("command") or []
+                if not isinstance(argv, list):
+                    argv = []
+                health_commands.append(
+                    CommandProbe(
+                        name=str(item["name"]),
+                        argv=[str(part) for part in argv],
+                        shell=str(item.get("shell", "")),
+                        cwd=str(item.get("cwd", "")),
+                    )
+                )
 
     return Config(
         agent=AgentConfig(
@@ -198,6 +225,7 @@ def load_config(path: str | Path | None = None) -> Config:
         health=HealthConfig(
             processes=[str(item) for item in health_processes],
             tcp=[str(item) for item in health_tcp],
+            commands=health_commands,
         ),
         classifier=ClassifierConfig(
             type=_str(("CLASSIFIER_TYPE",), str(classifier.get("type", "regex"))),
